@@ -330,13 +330,15 @@ function parseRichText(str){
 async function load(){
   if(!GAS) return;
   try{
-    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room));
+    // redirect: "follow" を明示的に指定して、GASのリダイレクトを正しく追跡する
+    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room), {
+      method: "GET",
+      redirect: "follow" 
+    });
     let data = await r.json();
     
-    // GASの新しいレスポンス構造（{messages, rooms}）に対応
     App.messages = data.messages || [];
     
-    // 新しいルームがスプレッドシート側に増えていたら同期
     if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
       App.rooms = data.rooms;
       renderRooms();
@@ -344,7 +346,7 @@ async function load(){
     
     render();
   }catch(e){
-    console.log(e);
+    console.log("読み込みエラー:", e);
   }
 }
 

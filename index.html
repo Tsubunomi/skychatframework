@@ -367,29 +367,48 @@ async function send(){
   let msg = text.value.trim();
   if(msg == "") return;
   
+  // 1. 送信データを準備
   let data = {
     user: App.user,
     room: App.room,
-    message: msg
+    message: msg,
+    time: new Date() // 仮の現在時刻
   };
   
-  if(GAS){
-    // GAS特有のCORSエラーを防ぐため、text/plainでPOST
-    await fetch(GAS, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain"
-      },
-      body: JSON.stringify(data)
-    });
-  } else {
-    App.messages.push({ ...data, time: new Date() });
-    render();
-  }
+  // 2. 【ここが重要】GASの返事を待たずに、まず自分の画面（配列）に仮で追加してすぐ表示する！
+  App.messages.push(data);
+  render();
+  
+  // 入力欄を即座にクリアして、連打を防ぐ
   text.value = "";
-  toast("送信しました");
-  setTimeout(load, 500); // 送信直後に少し待って再読み込み
+  toast("送信中..."); // 「送信しました」から「送信中...」に変えるとより親切です
+  
+  if(GAS){
+    try {
+      // 3. 裏でこっそりGASに送信（awaitするけど、画面はもう更新されているので待たされない）
+      await fetch(GAS, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain"
+        },
+        body: JSON.stringify({
+          user: data.user,
+          room: data.room,
+          message: data.message
+        })
+      });
+      
+      // 送信成功メッセージに切り替え
+      toast("送信しました");
+      
+      // 4. 送信が完了したら、ちょっとだけ待って最新データをGASから再取得して同期する
+      setTimeout(load, 1000);
+    } catch(e) {
+      console.log("送信エラー:", e);
+      toast("送信に失敗しました");
+    }
+  }
 }
 
 text.addEventListener("keydown", e => {

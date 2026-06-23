@@ -287,11 +287,18 @@ function renderRooms(){
 }
 
 // メッセージのレンダリング
+// メッセージのレンダリング（変更があった時だけ中身を書き換える）
 function render(){
-  messages.innerHTML="";
-  App.messages.forEach(v=>{
-    let div=document.createElement("div");
-    div.className="message";
+  // 画面上のメッセージ数と、新しく届いたデータ数が同じなら何もしない（アニメーションの再発防止）
+  const currentDOMCount = messages.querySelectorAll(".message").length;
+  if (currentDOMCount === App.messages.length) {
+    return; 
+  }
+
+  messages.innerHTML = "";
+  App.messages.forEach(v => {
+    let div = document.createElement("div");
+    div.className = "message";
     if(v.user == App.user){
       div.classList.add("self");
     }
@@ -302,7 +309,35 @@ function render(){
     `;
     messages.appendChild(div);
   });
+  
+  // スクロールを一番下に移動
   messages.scrollTop = messages.scrollHeight;
+}
+
+async function load(){
+  if(!GAS) return;
+  try{
+    // リダイレクト追従を追加してCORS/通信を安定化
+    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room), {
+      method: "GET",
+      redirect: "follow"
+    });
+    let data = await r.json();
+    
+    // データをアプリ状態に保存
+    App.messages = data.messages || [];
+    
+    // ルーム一覧の動的更新
+    if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
+      App.rooms = data.rooms;
+      renderRooms();
+    }
+    
+    // 画面の描画処理へ
+    render();
+  }catch(e){
+    console.log("読み込みエラー:", e);
+  }
 }
 
 function format(t){
@@ -327,28 +362,6 @@ function parseRichText(str){
   return escaped;
 }
 
-async function load(){
-  if(!GAS) return;
-  try{
-    // redirect: "follow" を明示的に指定して、GASのリダイレクトを正しく追跡する
-    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room), {
-      method: "GET",
-      redirect: "follow" 
-    });
-    let data = await r.json();
-    
-    App.messages = data.messages || [];
-    
-    if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
-      App.rooms = data.rooms;
-      renderRooms();
-    }
-    
-    render();
-  }catch(e){
-    console.log("読み込みエラー:", e);
-  }
-}
 
 async function send(){
   let msg = text.value.trim();

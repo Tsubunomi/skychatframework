@@ -3,806 +3,393 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-
 <title>Sky Chat</title>
-
 <style>
-
 :root{
-
---bg:#202225;
---panel:#2f3136;
---panel2:#36393f;
---text:#ffffff;
---sub:#b9bbbe;
---accent:#5865f2;
---green:#3ba55d;
-
+  --bg:#202225;
+  --panel:#2f3136;
+  --panel2:#36393f;
+  --text:#ffffff;
+  --sub:#b9bbbe;
+  --accent:#5865f2;
+  --green:#3ba55d;
 }
-
 *{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:sans-serif;
-
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:sans-serif;
 }
-
 body{
-
-background:var(--bg);
-height:100vh;
-display:flex;
-overflow:hidden;
-color:white;
-
+  background:var(--bg);
+  height:100vh;
+  display:flex;
+  overflow:hidden;
+  color:white;
 }
-
 #sidebar{
-
-width:260px;
-background:#2b2d31;
-display:flex;
-flex-direction:column;
-
+  width:260px;
+  background:#2b2d31;
+  display:flex;
+  flex-direction:column;
 }
-
 #logo{
-
-padding:20px;
-font-size:24px;
-font-weight:bold;
-background:var(--accent);
-
+  padding:20px;
+  font-size:24px;
+  font-weight:bold;
+  background:var(--accent);
 }
-
 #userinfo{
-
-padding:15px;
-border-bottom:1px solid rgba(255,255,255,.1);
-
+  padding:15px;
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
-
 #username{
-
-width:100%;
-padding:10px;
-margin-top:10px;
-border:none;
-border-radius:8px;
-background:#444;
-color:white;
-
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:#444;
+  color:white;
 }
-
+#room-list{
+  flex:1;
+  overflow-y:auto;
+}
 .room{
-
-padding:15px;
-cursor:pointer;
-transition:.2s;
-
+  padding:15px;
+  cursor:pointer;
+  transition:.2s;
 }
-
 .room:hover{
-
-background:#404249;
-
+  background:#404249;
 }
-
 .active{
-
-background:#4f545c;
-
+  background:#4f545c;
 }
-
 #main{
-
-flex:1;
-display:flex;
-flex-direction:column;
-
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
-
 #header{
-
-height:60px;
-background:var(--panel);
-display:flex;
-align-items:center;
-padding:20px;
-font-size:20px;
-font-weight:bold;
-
+  height:60px;
+  background:var(--panel);
+  display:flex;
+  align-items:center;
+  padding:20px;
+  font-size:20px;
+  font-weight:bold;
 }
-
 #messages{
-
-flex:1;
-overflow:auto;
-padding:20px;
-display:flex;
-flex-direction:column;
-gap:12px;
-
+  flex:1;
+  overflow:auto;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
-
 .message{
-
-max-width:70%;
-background:var(--panel2);
-padding:12px;
-border-radius:12px;
-animation:fade .2s;
-
+  max-width:70%;
+  background:var(--panel2);
+  padding:12px;
+  border-radius:12px;
+  animation:fade .2s;
 }
-
 .self{
-
-align-self:flex-end;
-background:var(--accent);
-
+  align-self:flex-end;
+  background:var(--accent);
 }
-
 .name{
-
-font-weight:bold;
-margin-bottom:5px;
-
+  font-weight:bold;
+  margin-bottom:5px;
 }
-
 .time{
-
-font-size:10px;
-opacity:.7;
-margin-top:5px;
-
+  font-size:10px;
+  opacity:.7;
+  margin-top:5px;
 }
-
+/* リッチテキスト用スタイル */
+.inline-code {
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
 #bottom{
-
-background:var(--panel);
-padding:15px;
-display:flex;
-gap:10px;
-
+  background:var(--panel);
+  padding:15px;
+  display:flex;
+  gap:10px;
 }
-
 #text{
-
-flex:1;
-resize:none;
-height:60px;
-border:none;
-border-radius:10px;
-padding:10px;
-background:#404249;
-color:white;
-
+  flex:1;
+  resize:none;
+  height:60px;
+  border:none;
+  border-radius:10px;
+  padding:10px;
+  background:#404249;
+  color:white;
 }
-
 button{
-
-padding:15px 25px;
-border:none;
-border-radius:10px;
-background:var(--accent);
-color:white;
-cursor:pointer;
-transition:.2s;
-
+  padding:15px 25px;
+  border:none;
+  border-radius:10px;
+  background:var(--accent);
+  color:white;
+  cursor:pointer;
+  transition:.2s;
 }
-
 button:hover{
-
-transform:scale(1.05);
-
+  transform:scale(1.05);
 }
-
 #toast{
-
-position:fixed;
-bottom:20px;
-right:20px;
-background:var(--green);
-padding:15px;
-border-radius:10px;
-display:none;
-
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:var(--green);
+  padding:15px;
+  border-radius:10px;
+  display:none;
+  z-index: 100;
 }
-
 .modal{
-
-position:fixed;
-left:0;
-top:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.6);
-display:none;
-justify-content:center;
-align-items:center;
-
+  position:fixed;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index: 200;
 }
-
 .modal-content{
-
-width:400px;
-background:var(--panel);
-padding:20px;
-border-radius:15px;
-
+  width:400px;
+  background:var(--panel);
+  padding:20px;
+  border-radius:15px;
 }
-
 .setting{
-
-margin-top:15px;
-
+  margin-top:15px;
 }
-
 .setting input{
-
-width:100%;
-padding:10px;
-margin-top:10px;
-
+  width:100%;
+  padding:10px;
+  margin-top:10px;
 }
-
 @keyframes fade{
-
-from{
-
-opacity:0;
-transform:translateY(10px);
-
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
 }
-
-to{
-
-opacity:1;
-transform:translateY(0);
-
-}
-
-}
-
 @media(max-width:700px){
-
-#sidebar{
-
-display:none;
-
+  #sidebar{ display:none; }
+  .message{ max-width:90%; }
 }
-
-.message{
-
-max-width:90%;
-
-}
-
-}
-
 </style>
-
 </head>
-
 <body>
 
 <div id="sidebar">
-
-<div id="logo">
-
-☁ Sky Chat
-
-</div>
-
-<div id="userinfo">
-
-<div>
-
-あなたの名前
-
-</div>
-
-<input id="username">
-
-</div>
-
-<div class="room active">
-
-# 雑談
-
-</div>
-
-<div class="room">
-
-# 探究
-
-</div>
-
-<div class="room">
-
-# 音楽
-
-</div>
-
-<div class="room">
-
-# プログラミング
-
-</div>
-
-<div class="room">
-
-# その他
-
-</div>
-
+  <div id="logo">☁ Sky Chat</div>
+  <div id="userinfo">
+    <div>あなたの名前</div>
+    <input id="username">
+  </div>
+  <div id="room-list"></div>
 </div>
 
 <div id="main">
-
-<div id="header">
-
-Sky Chat
-
+  <div id="header">Sky Chat</div>
+  <div id="messages"></div>
+  <div id="bottom">
+    <textarea id="text" placeholder="メッセージを入力&#10;Shift+Enterで改行&#10;Enterで送信"></textarea>
+    <button onclick="send()">送信</button>
+    <button onclick="openSetting()">⚙</button>
+  </div>
 </div>
 
-<div id="messages">
-
-</div>
-
-<div id="bottom">
-
-<textarea
-id="text"
-placeholder="メッセージを入力
-Shift+Enterで改行
-Enterで送信"></textarea>
-
-<button onclick="send()">
-
-送信
-
-</button>
-
-<button onclick="openSetting()">
-
-⚙
-
-</button>
-
-</div>
-
-</div>
-
-<div id="toast">
-
-送信しました
-
-</div>
+<div id="toast">送信しました</div>
 
 <div class="modal" id="setting">
-
-<div class="modal-content">
-
-<h2>
-
-設定
-
-</h2>
-
-<div class="setting">
-
-表示名
-
-<input id="settingName">
-
-</div>
-
-<div class="setting">
-
-<button onclick="saveSetting()">
-
-保存
-
-</button>
-
-<button onclick="closeSetting()">
-
-閉じる
-
-</button>
-
-</div>
-
-</div>
-
+  <div class="modal-content">
+    <h2>設定</h2>
+    <div class="setting">
+      表示名
+      <input id="settingName">
+    </div>
+    <div class="setting">
+      <button onclick="saveSetting()">保存</button>
+      <button onclick="closeSetting()">閉じる</button>
+    </div>
+  </div>
 </div>
 
 <script>
-
+// WebアプリのURLをここに貼り付けてください
 const GAS="https://script.google.com/macros/s/AKfycbyKWav6fidXMcRB4xyCBeT5_DDf0ZpYiZ21Ir4wEiqyl80xItyOexTOF_P8aQJQulloaQ/exec";
 
 const App={
-
-user:"",
-
-room:"雑談",
-
-messages:[]
-
+  user:"",
+  room:"雑談", // 初期デフォルトルーム
+  messages:[],
+  rooms: ["雑談"] // 初期ルームリスト（読み込みまでのフォールバック）
 }
 
 function init(){
-
-App.user=
-
-localStorage.getItem("user")
-
-||
-
-"名無し";
-
-username.value=App.user;
-
-settingName.value=App.user;
-
-load();
-
-setInterval(load,2000);
-
+  App.user = localStorage.getItem("user") || "名無し";
+  username.value = App.user;
+  settingName.value = App.user;
+  
+  load();
+  setInterval(load, 2000);
 }
 
 function saveSetting(){
-
-App.user=
-
-settingName.value;
-
-username.value=
-
-App.user;
-
-localStorage.setItem(
-
-"user",
-
-App.user
-
-);
-
-closeSetting();
-
+  App.user = settingName.value;
+  username.value = App.user;
+  localStorage.setItem("user", App.user);
+  closeSetting();
 }
-
-function openSetting(){
-
-setting.style.display="flex";
-
-}
-
-function closeSetting(){
-
-setting.style.display="none";
-
-}
+function openSetting(){ setting.style.display="flex"; }
+function closeSetting(){ setting.style.display="none"; }
 
 function toast(text){
-
-toastBox=document.getElementById("toast");
-
-toastBox.innerHTML=text;
-
-toastBox.style.display="block";
-
-setTimeout(()=>{
-
-toastBox.style.display="none";
-
-},1500);
-
+  const toastBox = document.getElementById("toast");
+  toastBox.innerHTML = text;
+  toastBox.style.display = "block";
+  setTimeout(()=>{ toastBox.style.display="none"; }, 1500);
 }
 
+// サイドバーのルーム一覧を動的に描画
+function renderRooms(){
+  const container = document.getElementById("room-list");
+  container.innerHTML = "";
+  
+  App.rooms.forEach(rName => {
+    let div = document.createElement("div");
+    div.className = "room";
+    if(rName === App.room) {
+      div.classList.add("active");
+    }
+    div.innerText = `# ${rName}`;
+    
+    div.onclick = () => {
+      document.querySelectorAll(".room").forEach(v => v.classList.remove("active"));
+      div.classList.add("active");
+      App.room = rName;
+      load();
+    };
+    container.appendChild(div);
+  });
+}
+
+// メッセージのレンダリング
 function render(){
-
-messages.innerHTML="";
-
-App.messages.forEach(v=>{
-
-let div=document.createElement("div");
-
-div.className="message";
-
-if(v.user==App.user){
-
-div.classList.add("self");
-
-}
-
-div.innerHTML=
-
-`
-
-<div class=name>
-
-${v.user}
-
-</div>
-
-<div>
-
-${escape(v.message)}
-
-</div>
-
-<div class=time>
-
-${format(v.time)}
-
-</div>
-
-`;
-
-messages.appendChild(div);
-
-});
-
-messages.scrollTop=
-
-messages.scrollHeight;
-
+  messages.innerHTML="";
+  App.messages.forEach(v=>{
+    let div=document.createElement("div");
+    div.className="message";
+    if(v.user == App.user){
+      div.classList.add("self");
+    }
+    div.innerHTML = `
+      <div class="name">${v.user}</div>
+      <div>${parseRichText(v.message)}</div>
+      <div class="time">${format(v.time)}</div>
+    `;
+    messages.appendChild(div);
+  });
+  messages.scrollTop = messages.scrollHeight;
 }
 
 function format(t){
-
-let d=new Date(t);
-
-return d.toLocaleTimeString();
-
+  let d=new Date(t);
+  return d.toLocaleTimeString();
 }
 
-function escape(str){
-
-return str
-
-.replaceAll("<","&lt;")
-
-.replaceAll(">","&gt;")
-
-.replaceAll("\n","<br>");
-
+// 安全にエスケープした後にリッチテキスト（Markdown）化
+function parseRichText(str){
+  // 1. まずHTMLタグを無効化（エスケープ）
+  let escaped = str
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+    
+  // 2. 簡易Markdown変換処理
+  escaped = escaped
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')       // **太字** -> <b>
+    .replace(/__(.*?)__/g, '<u>$1</u>')           // __下線__ -> <u>
+    .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>') // `コード` -> <code>
+    .replaceAll("\n", "<br>");                    // 改行処理
+    
+  return escaped;
 }
 
 async function load(){
-
-if(!GAS)return;
-
-try{
-
-let r=
-
-await fetch(
-
-GAS+
-
-"?room="+
-
-App.room
-
-);
-
-let data=
-
-await r.json();
-
-App.messages=data;
-
-render();
-
-}catch(e){
-
-console.log(e);
-
-}
-
+  if(!GAS) return;
+  try{
+    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room));
+    let data = await r.json();
+    
+    // GASの新しいレスポンス構造（{messages, rooms}）に対応
+    App.messages = data.messages || [];
+    
+    // 新しいルームがスプレッドシート側に増えていたら同期
+    if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
+      App.rooms = data.rooms;
+      renderRooms();
+    }
+    
+    render();
+  }catch(e){
+    console.log(e);
+  }
 }
 
 async function send(){
-
-let msg=text.value.trim();
-
-if(msg=="")return;
-
-let data={
-
-user:App.user,
-
-room:App.room,
-
-message:msg,
-
-time:new Date()
-
-};
-
-if(GAS){
-
-await fetch(
-
-GAS,
-
-{
-
-method:"POST",
-
-body:JSON.stringify(data)
-
+  let msg = text.value.trim();
+  if(msg == "") return;
+  
+  let data = {
+    user: App.user,
+    room: App.room,
+    message: msg
+  };
+  
+  if(GAS){
+    // GAS特有のCORSエラーを防ぐため、text/plainでPOST
+    await fetch(GAS, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify(data)
+    });
+  } else {
+    App.messages.push({ ...data, time: new Date() });
+    render();
+  }
+  text.value = "";
+  toast("送信しました");
+  setTimeout(load, 500); // 送信直後に少し待って再読み込み
 }
 
-);
-
-}else{
-
-App.messages.push(data);
-
-render();
-
-}
-
-text.value="";
-
-toast("送信しました");
-
-}
-
-text.addEventListener(
-
-"keydown",
-
-e=>{
-
-if(
-
-e.key=="Enter"
-
-&&
-
-!e.shiftKey
-
-){
-
-e.preventDefault();
-
-send();
-
-}
-
-}
-
-);
-
-username.addEventListener(
-
-"change",
-
-()=>{
-
-App.user=username.value;
-
-localStorage.setItem(
-
-"user",
-
-App.user
-
-);
-
-}
-
-);
-
-document
-
-.querySelectorAll(".room")
-
-.forEach(x=>{
-
-x.onclick=()=>{
-
-document
-
-.querySelectorAll(".room")
-
-.forEach(v=>{
-
-v.classList.remove("active");
-
+text.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
 });
 
-x.classList.add("active");
-
-App.room=
-
-x.innerText
-
-.replace("#","")
-
-.trim();
-
-load();
-
-};
-
+username.addEventListener("change", () => {
+  App.user = username.value;
+  localStorage.setItem("user", App.user);
 });
-
-/*
-
-------------------------
-
-今後追加予定
-
-・画像送信
-
-・返信
-
-・リアクション
-
-・Markdown
-
-・リッチテキスト
-
-・検索
-
-・未読表示
-
-・プロフィール画像
-
-・通知
-
-・ダーク切替
-
-・PWA
-
-・オンライン表示
-
-・タイピング中表示
-
-・ルーム追加
-
-・管理者機能
-
-------------------------
-
-GAS POST
-
-{
-
-user
-
-room
-
-message
-
-time
-
-}
-
-GAS GET
-
-[
-{
-user:"",
-message:"",
-time:""
-}
-]
-
-*/
 
 init();
-
 </script>
-
 </body>
 </html>

@@ -107,7 +107,7 @@ body {
   color: var(--text);
 }
 
-/* --- メインエリア --- */
+/* --- メメインエリア --- */
 #main {
   flex: 1;
   display: flex;
@@ -342,7 +342,7 @@ button:hover {
 <body>
 
 <div id="sidebar">
-  <div id="logo">☁ Sky Chat v1.1.6</div>
+  <div id="logo">☁ Sky Chat v1.1.7</div>
   <div id="userinfo">
     <div class="user-meta">
       <span id="display-nickname">---</span>
@@ -355,7 +355,7 @@ button:hover {
 </div>
 
 <div id="main">
-  <div id="header">Sky Chat v1.1.6</div>
+  <div id="header">Sky Chat v1.1.7</div>
   <div id="messages"></div>
   <div id="bottom">
     <textarea id="text" placeholder="メッセージを入力&#10;Shift+Enterで改行&#10;Enterで送信"></textarea>
@@ -546,7 +546,6 @@ function render(){
     let div = document.createElement("div");
     div.className = "message" + (v.user === App.authUser ? " self" : "");
     
-    // 表示名が未設定ならユーザー名を使用
     const displayName = v.nickname || v.user;
     
     div.innerHTML = `
@@ -573,15 +572,11 @@ async function load(){
       return logout();
     }
     
-    // 【重要】送信直後にメッセージが消えるのを防ぐロジック
-    // スプレッドシート側の書き込みラグを考慮し、ローカルの最新メッセージがサーバー側にまだ反映されていない場合は
-    // ローカルデータを消さずに保持して合成する
     let serverMessages = data.messages || [];
     if (App.messages.length > 0 && serverMessages.length > 0) {
       let lastLocal = App.messages[App.messages.length - 1];
       let isReflected = serverMessages.some(m => m.message === lastLocal.message && m.user === lastLocal.user);
       if (!isReflected && lastLocal.user === App.authUser) {
-        // まだサーバー側に反映されていない自分のメッセージがあれば、末尾に維持する
         serverMessages.push(lastLocal);
       }
     }
@@ -604,9 +599,34 @@ async function load(){
   }
 }
 
+// 🕒 日時表示のスマートフォーマット関数
 function format(t){
-  let d=new Date(t);
-  return d.toLocaleTimeString();
+  let d = new Date(t);
+  if (isNaN(d.getTime())) return t; // 解析できない形式の場合はそのまま返す
+
+  let now = new Date();
+  
+  // 各数値を2桁固定にするヘルパー
+  const pad = n => String(n).padStart(2, '0');
+  let timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  // 年・月・日を比較するために日付の開始時刻を合わせる
+  let dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let diffTime = nowDate.getTime() - dDate.getTime();
+  let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return `今日 ${timeStr}`;
+  } else if (diffDays === 1) {
+    return `昨日 ${timeStr}`;
+  } else if (d.getFullYear() === now.getFullYear()) {
+    // 同じ年なら「月/日」表示
+    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
+  } else {
+    // 違う年なら「年/月/日」表示
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
+  }
 }
 
 function parseRichText(str){

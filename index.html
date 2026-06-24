@@ -56,26 +56,10 @@ body {
 
 #userinfo {
   padding: 20px;
-  font-size: 13px;
-  color: var(--sub);
-  font-weight: 600;
-}
-
-#username {
-  width: 100%;
-  padding: 10px 12px;
-  margin-top: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: var(--radius-md);
-  background: #1e1f22;
-  color: var(--text);
   font-size: 14px;
-  transition: var(--transition);
-}
-
-#username:focus {
-  outline: none;
-  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #room-list {
@@ -233,16 +217,7 @@ button:hover {
   background: var(--accent-hover);
 }
 
-/* ⚙ボタン用の微調整 */
-button[onclick="openSetting()"] {
-  background: #4e5058;
-  padding: 0 16px;
-}
-button[onclick="openSetting()"]:hover {
-  background: #6d6f78;
-}
-
-/* --- 通知・モーダル --- */
+/* --- 通知・モーダル（ログイン画面） --- */
 #toast {
   position: fixed;
   bottom: 32px;
@@ -263,18 +238,18 @@ button[onclick="openSetting()"]:hover {
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(4px); /* 背景を少しぼかす */
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
   z-index: 200;
 }
 
 .modal-content {
-  width: 400px;
+  width: 360px;
   background: var(--sidebar-bg);
-  padding: 28px;
+  padding: 30px;
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -282,6 +257,7 @@ button[onclick="openSetting()"]:hover {
 .modal-content h2 {
   font-size: 20px;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .setting {
@@ -294,10 +270,12 @@ button[onclick="openSetting()"]:hover {
   width: 100%;
   padding: 12px;
   margin-top: 8px;
+  margin-bottom: 16px;
   background: #1e1f22;
   border: 1px solid rgba(0,0,0,0.2);
   border-radius: var(--radius-md);
   color: white;
+  font-size: 14px;
 }
 
 .setting input:focus {
@@ -305,11 +283,9 @@ button[onclick="openSetting()"]:hover {
   border-color: var(--accent);
 }
 
-.setting-buttons {
-  margin-top: 24px;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+.modal button {
+  width: 100%;
+  margin-top: 8px;
 }
 
 @keyframes fade {
@@ -329,10 +305,7 @@ button[onclick="openSetting()"]:hover {
 
 <div id="sidebar">
   <div id="logo">☁ Sky Chat</div>
-  <div id="userinfo">
-    <div>あなたの名前</div>
-    <input id="username">
-  </div>
+  <div id="userinfo">ログイン中: <span id="display-username">---</span></div>
   <div id="room-list"></div>
 </div>
 
@@ -342,23 +315,22 @@ button[onclick="openSetting()"]:hover {
   <div id="bottom">
     <textarea id="text" placeholder="メッセージを入力&#10;Shift+Enterで改行&#10;Enterで送信"></textarea>
     <button onclick="send()">送信</button>
-    <button onclick="openSetting()">⚙</button>
+    <button onclick="logout()" style="background:#4e5058;">ログアウト</button>
   </div>
 </div>
 
 <div id="toast">送信しました</div>
 
-<div class="modal" id="setting">
+<div class="modal" id="loginModal">
   <div class="modal-content">
-    <h2>設定</h2>
+    <h2>Sky Chat ログイン</h2>
     <div class="setting">
-      表示名
-      <input id="settingName">
+      ユーザー名
+      <input id="loginUser" placeholder="ユーザー名を入力">
+      パスワード
+      <input id="loginPass" type="password" placeholder="パスワードを入力">
     </div>
-    <div class="setting">
-      <button onclick="saveSetting()">保存</button>
-      <button onclick="closeSetting()">閉じる</button>
-    </div>
+    <button onclick="login()">ログイン</button>
   </div>
 </div>
 
@@ -367,29 +339,72 @@ button[onclick="openSetting()"]:hover {
 const GAS="https://script.google.com/macros/s/AKfycbyKWav6fidXMcRB4xyCBeT5_DDf0ZpYiZ21Ir4wEiqyl80xItyOexTOF_P8aQJQulloaQ/exec";
 
 const App={
-  user:"",
+  authUser:"",
+  authPass:"",
   room:"雑談", // 初期デフォルトルーム
   messages:[],
-  rooms: ["雑談"] // 初期ルームリスト（読み込みまでのフォールバック）
+  rooms: ["雑談"] // 初期ルームリスト
 }
 
 function init(){
-  App.user = localStorage.getItem("user") || "名無し";
-  username.value = App.user;
-  settingName.value = App.user;
+  App.authUser = localStorage.getItem("chat_user") || "";
+  App.authPass = localStorage.getItem("chat_pass") || "";
   
-  load();
-  setInterval(load, 2000);
+  if(App.authUser && App.authPass) {
+    // ログイン情報が保存されていればメイン画面を表示
+    document.getElementById("loginModal").style.display = "none";
+    document.getElementById("display-username").innerText = App.authUser;
+    load();
+    setInterval(load, 2000);
+  } else {
+    // なければログインモーダルを固定表示
+    document.getElementById("loginModal").style.display = "flex";
+  }
 }
 
-function saveSetting(){
-  App.user = settingName.value;
-  username.value = App.user;
-  localStorage.setItem("user", App.user);
-  closeSetting();
+async function login() {
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value.trim();
+  if(!u || !p) return alert("両方入力してください");
+  
+  // 入力情報で一度通信テストを行って認証
+  try {
+    let r = await fetch(`${GAS}?room=雑談&authUser=${encodeURIComponent(u)}&authPass=${encodeURIComponent(p)}`, {
+      method: "GET",
+      redirect: "follow"
+    });
+    let data = await r.json();
+    
+    if(data.error) {
+      alert("ユーザー名またはパスワードが正しくありません");
+    } else {
+      // ログイン成功
+      localStorage.setItem("chat_user", u);
+      localStorage.setItem("chat_pass", p);
+      App.authUser = u;
+      App.authPass = p;
+      
+      document.getElementById("loginModal").style.display = "none";
+      document.getElementById("display-username").innerText = u;
+      
+      App.messages = data.messages || [];
+      if(data.rooms) App.rooms = data.rooms;
+      
+      renderRooms();
+      render();
+      setInterval(load, 2000);
+    }
+  } catch(e) {
+    alert("認証通信に失敗しました。URLや接続を確認してください");
+    console.log(e);
+  }
 }
-function openSetting(){ setting.style.display="flex"; }
-function closeSetting(){ setting.style.display="none"; }
+
+function logout() {
+  localStorage.removeItem("chat_user");
+  localStorage.removeItem("chat_pass");
+  location.reload();
+}
 
 function toast(text){
   const toastBox = document.getElementById("toast");
@@ -422,7 +437,6 @@ function renderRooms(){
 }
 
 // メッセージのレンダリング
-// メッセージのレンダリング（変更があった時だけ中身を書き換える）
 function render(){
   // 画面上のメッセージ数と、新しく届いたデータ数が同じなら何もしない（アニメーションの再発防止）
   const currentDOMCount = messages.querySelectorAll(".message").length;
@@ -433,10 +447,8 @@ function render(){
   messages.innerHTML = "";
   App.messages.forEach(v => {
     let div = document.createElement("div");
-    div.className = "message";
-    if(v.user == App.user){
-      div.classList.add("self");
-    }
+    // ログイン中の自分の発言であれば吹き出しを右に寄せる (selfクラス付与)
+    div.className = "message" + (v.user === App.authUser ? " self" : "");
     div.innerHTML = `
       <div class="name">${v.user}</div>
       <div>${parseRichText(v.message)}</div>
@@ -450,14 +462,19 @@ function render(){
 }
 
 async function load(){
-  if(!GAS) return;
+  if(!GAS || !App.authUser) return;
   try{
-    // リダイレクト追従を追加してCORS/通信を安定化
-    let r = await fetch(GAS + "?room=" + encodeURIComponent(App.room), {
+    // 常に認証トークン(User/Pass)をセットしてリクエスト
+    let r = await fetch(`${GAS}?room=${encodeURIComponent(App.room)}&authUser=${encodeURIComponent(App.authUser)}&authPass=${encodeURIComponent(App.authPass)}`, {
       method: "GET",
       redirect: "follow"
     });
     let data = await r.json();
+    
+    if(data.error) {
+      // スプレッドシート側でアカウントが消されるなどした場合は強制ログアウト
+      return logout();
+    }
     
     // データをアプリ状態に保存
     App.messages = data.messages || [];
@@ -497,30 +514,29 @@ function parseRichText(str){
   return escaped;
 }
 
-
 async function send(){
   let msg = text.value.trim();
-  if(msg == "") return;
+  if(msg == "" || !App.authUser) return;
   
   // 1. 送信データを準備
-  let data = {
-    user: App.user,
+  let localData = {
+    user: App.authUser,
     room: App.room,
     message: msg,
     time: new Date() // 仮の現在時刻
   };
   
-  // 2. 【ここが重要】GASの返事を待たずに、まず自分の画面（配列）に仮で追加してすぐ表示する！
-  App.messages.push(data);
+  // 2. GASの返事を待たずにすぐ仮表示
+  App.messages.push(localData);
   render();
   
-  // 入力欄を即座にクリアして、連打を防ぐ
+  // 入力欄を即座にクリアして連打防止
   text.value = "";
-  toast("送信中..."); // 「送信しました」から「送信中...」に変えるとより親切です
+  toast("送信中...");
   
   if(GAS){
     try {
-      // 3. 裏でこっそりGASに送信（awaitするけど、画面はもう更新されているので待たされない）
+      // 3. 裏でこっそりGASに送信。認証情報も乗せる
       await fetch(GAS, {
         method: "POST",
         mode: "no-cors",
@@ -528,17 +544,17 @@ async function send(){
           "Content-Type": "text/plain"
         },
         body: JSON.stringify({
-          user: data.user,
-          room: data.room,
-          message: data.message
+          authUser: App.authUser,
+          authPass: App.authPass,
+          room: App.room,
+          message: msg
         })
       });
       
-      // 送信成功メッセージに切り替え
       toast("送信しました");
       
-      // 4. 送信が完了したら、ちょっとだけ待って最新データをGASから再取得して同期する
-      setTimeout(load, 1000);
+      // 4. 少し待って同期
+      setTimeout(load, 500);
     } catch(e) {
       console.log("送信エラー:", e);
       toast("送信に失敗しました");
@@ -551,11 +567,6 @@ text.addEventListener("keydown", e => {
     e.preventDefault();
     send();
   }
-});
-
-username.addEventListener("change", () => {
-  App.user = username.value;
-  localStorage.setItem("user", App.user);
 });
 
 init();

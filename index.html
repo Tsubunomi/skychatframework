@@ -518,25 +518,27 @@ async function send(){
   let msg = text.value.trim();
   if(msg == "" || !App.authUser) return;
   
-  // 1. 送信データを準備
+  // ローカル用の仮表示データを準備
+  let currentNick = document.getElementById("display-nickname").innerText;
   let localData = {
-    user: App.authUser,
+    user: App.authUser,     // ★ここが判定（v.user === App.authUser）に使われます！
+    nickname: currentNick, // 表示用のニックネーム
+    profile: "",
     room: App.room,
     message: msg,
-    time: new Date() // 仮の現在時刻
+    time: new Date().toISOString() // タイムスタンプの形式を統一
   };
   
-  // 2. GASの返事を待たずにすぐ仮表示
+  // GASの返事を待たずにすぐ仮表示
   App.messages.push(localData);
   render();
   
-  // 入力欄を即座にクリアして連打防止
   text.value = "";
   toast("送信中...");
   
   if(GAS){
     try {
-      // 3. 裏でこっそりGASに送信。認証情報も乗せる
+      // 裏でGASに送信（authUser と authPass を渡す）
       await fetch(GAS, {
         method: "POST",
         mode: "no-cors",
@@ -552,8 +554,7 @@ async function send(){
       });
       
       toast("送信しました");
-      
-      // 4. 少し待って同期
+      // 送信完了後、少し待ってから最新の状態を読み込む
       setTimeout(load, 500);
     } catch(e) {
       console.log("送信エラー:", e);
@@ -561,13 +562,6 @@ async function send(){
     }
   }
 }
-
-text.addEventListener("keydown", e => {
-  if(e.key === "Enter" && !e.shiftKey){
-    e.preventDefault();
-    send();
-  }
-});
 
 init();
 </script>

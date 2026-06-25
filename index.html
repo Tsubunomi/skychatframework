@@ -645,25 +645,61 @@ function renderRooms(){
   });
 }
 
-function render(){
+function render() {
   const messagesBox = document.getElementById("messages");
-  messagesBox.innerHTML = "";
   
-  App.messages.forEach(v => {
-    let div = document.createElement("div");
-    div.className = "message" + (v.user === App.authUser ? " self" : "");
+  // 現在画面に表示されているメッセージの数を取得
+  const currentDOMCount = messagesBox.querySelectorAll(".message").length;
+  
+  // もしサーバーのデータ（App.messages）と画面の数が同じなら、何もせず終了（ムダな再描画を防ぐ）
+  if (currentDOMCount === App.messages.length) {
+    return; 
+  }
+
+  // 最初（ログイン直後など）や、部屋が切り替わって画面がクリアされた時の処理
+  if (currentDOMCount === 0) {
+    App.messages.forEach(v => {
+      let div = document.createElement("div");
+      div.className = "message" + (v.user === App.authUser ? " self" : "");
+      
+      const displayName = v.nickname || v.user;
+      
+      div.innerHTML = `
+        <div class="name" onclick="showUserProfile('${v.user}')">👤 ${displayName}</div>
+        <div>${parseRichText(v.message)}</div>
+        <div class="time">${format(v.time)}</div>
+      `;
+      messagesBox.appendChild(div);
+    });
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+    return;
+  }
+
+  // 【ここがポイント】すでにメッセージがある場合は、新しく増えた分だけを末尾に追加する
+  if (App.messages.length > currentDOMCount) {
+    // 新着メッセージの配列を切り出す
+    const newMessages = App.messages.slice(currentDOMCount);
     
-    const displayName = v.nickname || v.user;
+    newMessages.forEach(v => {
+      let div = document.createElement("div");
+      div.className = "message" + (v.user === App.authUser ? " self" : "");
+      
+      const displayName = v.nickname || v.user;
+      
+      div.innerHTML = `
+        <div class="name" onclick="showUserProfile('${v.user}')">👤 ${displayName}</div>
+        <div>${parseRichText(v.message)}</div>
+        <div class="time">${format(v.time)}</div>
+      `;
+      messagesBox.appendChild(div);
+    });
     
-    // ★ 修正：onclick="showUserProfile('${v.user}')" を組み込み、誰の名前でも押せるように変更
-    div.innerHTML = `
-      <div class="name" onclick="showUserProfile('${v.user}')">👤 ${displayName}</div>
-      <div>${parseRichText(v.message)}</div>
-      <div class="time">${format(v.time)}</div>
-    `;
-    messagesBox.appendChild(div);
-  });
-  messagesBox.scrollTop = messagesBox.scrollHeight;
+    // スムーズに最下部へスクロールさせる
+    messagesBox.scrollTo({
+      top: messagesBox.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
 }
 
 async function load(){

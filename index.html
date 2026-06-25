@@ -132,7 +132,7 @@
       display: flex;
       flex-direction: column;
       background: var(--bg-main);
-      min-width: 0; /* フレックスアイテムの縮小バグ防止 */
+      min-width: 0;
     }
 
     #header {
@@ -185,7 +185,6 @@
       background: var(--bg-bubble-self);
     }
 
-    /* クリック可能なかわいいネームタグ */
     .name {
       font-size: 11px;
       font-weight: 700;
@@ -218,7 +217,7 @@
       color: #e53e3e;
     }
 
-    /* --- 徹底対策：はみ出さないボトム入力エリア --- */
+    /* --- 入力エリア --- */
     #bottom {
       background: #ffffff;
       padding: 12px 16px;
@@ -231,7 +230,7 @@
 
     #text {
       flex: 1;
-      min-width: 0; /* スマホ縮小時の潰れ防止 */
+      min-width: 0;
       resize: none;
       height: 40px;
       border: none;
@@ -265,7 +264,7 @@
       align-items: center;
       justify-content: center;
       white-space: nowrap;
-      flex-shrink: 0; /* ボタンが画面外に押し潰されるのを防ぐ */
+      flex-shrink: 0;
     }
 
     button:hover {
@@ -313,18 +312,19 @@
       color: var(--text-main);
     }
 
-    /* プロフィール確認モーダル用の特別スタイル */
     .prof-view-title {
       font-size: 20px;
       font-weight: 800;
       text-align: center;
       color: var(--text-main);
+      word-break: break-all; /* 長いニックネームでもはみ出さない */
     }
     .prof-view-id {
       font-size: 12px;
       color: var(--text-muted);
       text-align: center;
       margin-bottom: 16px;
+      word-break: break-all; /* マイクラのIDが長くても折り返すように修正 */
     }
     .prof-view-body {
       background: var(--bg-main);
@@ -398,7 +398,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- スマートフォン対応の最適化 --- */
     @media (max-width: 600px) {
       #menu-trigger { display: block; }
       #sidebar {
@@ -421,7 +420,7 @@
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
 <div id="sidebar">
-  <div id="logo">☁ Sky Chat v1.2.1</div>
+  <div id="logo">☁ Sky Chat v1.3.0</div>
   <div id="userinfo">
     <div class="user-meta">
       <span id="display-nickname">---</span>
@@ -495,7 +494,6 @@ const App = {
   rooms: ["雑談"] 
 }
 
-// ユーザー名からプロフィール情報を即座に引くためのキャッシュマップ
 let globalUserMap = {};
 
 function init() {
@@ -524,16 +522,17 @@ function toggleSidebar(open) {
   }
 }
 
-// ★ 新設：名前をクリックしたときにプロフィールポップアップを呼び出す関数
+// プロフィールポップアップのデータ流し込み
 function showUserProfile(username) {
   const user = globalUserMap[username];
   
   document.getElementById("viewUser").innerText = username;
   if (user) {
+    // キャッシュに存在する登録ユーザーの場合：登録されたニックネームを表示名に
     document.getElementById("viewNick").innerText = user.nickname || username;
     document.getElementById("viewProf").innerText = user.profile || "ひとことプロフィールは未設定です。";
   } else {
-    // キャッシュがない場合（マイクラ連携ユーザーや新規ユーザーなど）
+    // マイクラ連携ユーザーなどの場合：ユーザー名をそのまま表示名にする
     document.getElementById("viewNick").innerText = username;
     document.getElementById("viewProf").innerText = "Minecraftまたは外部システムから参加中のユーザーです。";
   }
@@ -638,6 +637,10 @@ function renderRooms(){
     div.onclick = () => {
       App.room = rName;
       document.getElementById("header-title").innerText = `# ${rName}`;
+      
+      // 部屋切り替え時にメッセージをクリアしてアニメーション崩れと重複を防止
+      document.getElementById("messages").innerHTML = "";
+      
       toggleSidebar(false);
       load();
     };
@@ -647,16 +650,14 @@ function renderRooms(){
 
 function render() {
   const messagesBox = document.getElementById("messages");
-  
-  // 現在画面に表示されているメッセージの数を取得
   const currentDOMCount = messagesBox.querySelectorAll(".message").length;
   
-  // もしサーバーのデータ（App.messages）と画面の数が同じなら、何もせず終了（ムダな再描画を防ぐ）
+  // メッセージ数に変更がない場合は再描画しない
   if (currentDOMCount === App.messages.length) {
     return; 
   }
 
-  // 最初（ログイン直後など）や、部屋が切り替わって画面がクリアされた時の処理
+  // 初期読み込み時、または部屋が切り替わって画面がクリアされた時
   if (currentDOMCount === 0) {
     App.messages.forEach(v => {
       let div = document.createElement("div");
@@ -675,9 +676,8 @@ function render() {
     return;
   }
 
-  // 【ここがポイント】すでにメッセージがある場合は、新しく増えた分だけを末尾に追加する
+  // 新しいメッセージが追加された時（差分だけを末尾に追加）
   if (App.messages.length > currentDOMCount) {
-    // 新着メッセージの配列を切り出す
     const newMessages = App.messages.slice(currentDOMCount);
     
     newMessages.forEach(v => {
@@ -694,7 +694,6 @@ function render() {
       messagesBox.appendChild(div);
     });
     
-    // スムーズに最下部へスクロールさせる
     messagesBox.scrollTo({
       top: messagesBox.scrollHeight,
       behavior: 'smooth'
@@ -711,7 +710,6 @@ async function load(){
     let data = await r.json();
     if(data.error) return logout();
     
-    // 他人のプロフィールをポップアップで出せるように、最新データをローカルマップにキャッシュ
     if(data.users) {
       globalUserMap = data.users;
     }

@@ -317,14 +317,14 @@
       font-weight: 800;
       text-align: center;
       color: var(--text-main);
-      word-break: break-all; /* 長いニックネームでもはみ出さない */
+      word-break: break-all;
     }
     .prof-view-id {
       font-size: 12px;
       color: var(--text-muted);
       text-align: center;
       margin-bottom: 16px;
-      word-break: break-all; /* マイクラのIDが長くても折り返すように修正 */
+      word-break: break-all;
     }
     .prof-view-body {
       background: var(--bg-main);
@@ -420,7 +420,7 @@
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
 <div id="sidebar">
-  <div id="logo">☁ Sky Chat v1.3.0</div>
+  <div id="logo">☁ Sky Chat v1.3.2</div>
   <div id="userinfo">
     <div class="user-meta">
       <span id="display-nickname">---</span>
@@ -494,6 +494,7 @@ const App = {
   rooms: ["雑談"] 
 }
 
+// GASがUsersを返さなくてもメッセージ履歴から自動構築する動的プロフィールマップ
 let globalUserMap = {};
 
 function init() {
@@ -522,19 +523,28 @@ function toggleSidebar(open) {
   }
 }
 
-// プロフィールポップアップのデータ流し込み
+// 【改善版ロジック】動的マップからプロフィールを検索・表示する (v1.3.2)
 function showUserProfile(username) {
   const user = globalUserMap[username];
   
   document.getElementById("viewUser").innerText = username;
-  if (user) {
-    // キャッシュに存在する登録ユーザーの場合：登録されたニックネームを表示名に
+  
+  if (user && user.profile) {
+    // ちゃんとプロフィール文が入っている場合
     document.getElementById("viewNick").innerText = user.nickname || username;
-    document.getElementById("viewProf").innerText = user.profile || "ひとことプロフィールは未設定です。";
+    document.getElementById("viewProf").innerText = user.profile;
+  } else if (user) {
+    // 存在はするがひとこと文だけ空の場合
+    document.getElementById("viewNick").innerText = user.nickname || username;
+    document.getElementById("viewProf").innerText = "ひとことプロフィールは未設定です。";
   } else {
-    // マイクラ連携ユーザーなどの場合：ユーザー名をそのまま表示名にする
+    // 履歴にないか、マイクラなどの外部システムユーザー
     document.getElementById("viewNick").innerText = username;
-    document.getElementById("viewProf").innerText = "Minecraftまたは外部システムから参加中のユーザーです。";
+    if (username.includes("(Minecraft)")) {
+      document.getElementById("viewProf").innerText = "Minecraftから参加中のプレイヤーです。";
+    } else {
+      document.getElementById("viewProf").innerText = "Minecraftまたは外部システムから参加中のユーザーです。";
+    }
   }
   document.getElementById("viewProfileModal").style.display = "flex";
 }
@@ -571,6 +581,10 @@ async function login() {
         document.getElementById("display-nickname").innerText = data.myProfile.nickname || u;
         document.getElementById("display-profile").innerText = data.myProfile.profile || "";
       }
+      
+      // ログイン直後のデータ収集
+      buildUserMap(App.messages);
+      
       renderRooms();
       render();
       setInterval(load, 2000);
@@ -611,6 +625,10 @@ async function saveProfile(){
     });
     document.getElementById("display-nickname").innerText = nick;
     document.getElementById("display-profile").innerText = prof;
+    
+    // 自分の最新情報をローカルに即座に反映
+    globalUserMap[App.authUser] = { nickname: nick, profile: prof };
+    
     closeProfileModal();
     toast("更新しました");
     load();
@@ -626,6 +644,26 @@ function toast(text){
   setTimeout(()=>{ toastBox.style.display="none"; }, 1500);
 }
 
+// GASから送られてくるメッセージ配列から、表示名とプロフィールを逆算してマップを作る機能 (v1.3.2)
+function buildUserMap(messages) {
+  if (!messages) return;
+  messages.forEach(m => {
+    if (m.user) {
+      // 常に最新の発言に紐づくニックネームとプロフで上書き
+      globalUserMap[m.user] = {
+        nickname: m.nickname || m.user,
+        profile: m.profile || ""
+      };
+    }
+  });
+  // 自分自身の最新データも上書きされないように再確保
+  const myNick = document.getElementById("display-nickname").innerText;
+  const myProf = document.getElementById("display-profile").innerText;
+  if(App.authUser && myNick !== "---") {
+    globalUserMap[App.authUser] = { nickname: myNick, profile: myProf };
+  }
+}
+
 function renderRooms(){
   const container = document.getElementById("room-list");
   container.innerHTML = "";
@@ -637,10 +675,7 @@ function renderRooms(){
     div.onclick = () => {
       App.room = rName;
       document.getElementById("header-title").innerText = `# ${rName}`;
-      
-      // 部屋切り替え時にメッセージをクリアしてアニメーション崩れと重複を防止
-      document.getElementById("messages").innerHTML = "";
-      
+      document.getElementById("messages").innerHTML = ""; 
       toggleSidebar(false);
       load();
     };
@@ -652,12 +687,10 @@ function render() {
   const messagesBox = document.getElementById("messages");
   const currentDOMCount = messagesBox.querySelectorAll(".message").length;
   
-  // メッセージ数に変更がない場合は再描画しない
   if (currentDOMCount === App.messages.length) {
     return; 
   }
 
-  // 初期読み込み時、または部屋が切り替わって画面がクリアされた時
   if (currentDOMCount === 0) {
     App.messages.forEach(v => {
       let div = document.createElement("div");
@@ -676,7 +709,6 @@ function render() {
     return;
   }
 
-  // 新しいメッセージが追加された時（差分だけを末尾に追加）
   if (App.messages.length > currentDOMCount) {
     const newMessages = App.messages.slice(currentDOMCount);
     
@@ -710,12 +742,11 @@ async function load(){
     let data = await r.json();
     if(data.error) return logout();
     
-    if(data.users) {
-      globalUserMap = data.users;
-    }
-    
     let serverMessages = data.messages || [];
     App.messages = serverMessages;
+    
+    // 【肝】GASが全ユーザー情報を返さないため、メッセージデータに付いてくる個別情報を収集してマップを自動生成
+    buildUserMap(serverMessages);
     
     if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
       App.rooms = data.rooms;

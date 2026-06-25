@@ -2,35 +2,34 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sky Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
+  <title>Sky Chat - Sweet Edition</title>
   <style>
     :root {
-      /* カラーシステム定義 */
-      --color-bg-main: #1e1f22;
-      --color-bg-sidebar: #2b2d31;
-      --color-bg-panel: #313338;
-      --color-bg-input: #383a40;
+      /* 可愛くて見やすいマカロンカラーパレット */
+      --bg-main: #f7f9fa;
+      --bg-sidebar: #ffffff;
+      --bg-bubble-other: #ffffff;
+      --bg-bubble-self: #e3f2fd; /* 爽やかなパステルブルー */
+      --bg-input: #edf2f7;
       
-      --color-text-main: #f2f3f5;
-      --color-text-muted: #949ba4;
-      --color-text-link: #00a8fc;
+      --text-main: #2d3748;
+      --text-muted: #718096;
       
-      --color-accent: #5865f2;
-      --color-accent-hover: #4752c4;
-      --color-success: #23a55a;
-      --color-danger: #da373c;
-      --color-dark-btn: #4e5058;
+      --color-accent: #4fd1c5; /* 優しいミントグリーン */
+      --color-accent-hover: #38b2ac;
+      --color-logout: #e2e8f0;
+      --color-logout-text: #4a5568;
       
-      /* レイアウト・装飾 */
-      --radius-lg: 16px;
-      --radius-md: 8px;
-      --radius-sm: 4px;
-      --sidebar-width: 260px;
-      --header-height: 60px;
-      --transition-fast: all 0.2s ease;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+      /* まるみの強いかわいい装飾 */
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --sidebar-width: 240px;
+      --header-height: 56px;
+      --transition: all 0.2s ease;
+      --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --shadow-popup: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -41,23 +40,23 @@
     }
 
     body {
-      background: var(--color-bg-main);
+      background: var(--bg-main);
       height: 100vh;
       display: flex;
       overflow: hidden;
-      color: var(--color-text-main);
+      color: var(--text-main);
       -webkit-font-smoothing: antialiased;
     }
 
-    /* --- サイドバー（レイアウト＆レスポンシブ考慮） --- */
+    /* --- サイドバー --- */
     #sidebar {
       width: var(--sidebar-width);
-      background: var(--color-bg-sidebar);
+      background: var(--bg-sidebar);
       display: flex;
       flex-direction: column;
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
       z-index: 10;
-      transition: var(--transition-fast);
+      transition: var(--transition);
     }
 
     #logo {
@@ -67,17 +66,19 @@
       align-items: center;
       font-size: 18px;
       font-weight: 800;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--color-accent);
+      border-bottom: 2px solid var(--bg-main);
     }
 
     #userinfo {
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px;
+      background: var(--bg-main);
+      margin: 12px;
+      border-radius: var(--radius-lg);
     }
 
     .user-meta {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -86,15 +87,14 @@
 
     .user-id {
       font-size: 11px;
-      color: var(--color-text-muted);
+      color: var(--text-muted);
       margin-top: 4px;
     }
 
     .user-prof-text {
-      font-size: 12px;
-      color: var(--color-text-muted);
+      font-size: 11px;
+      color: var(--text-muted);
       margin-top: 6px;
-      font-style: italic;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -103,287 +103,285 @@
     #room-list {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 8px;
+      padding: 8px;
     }
 
     .room {
-      padding: 10px 12px;
+      padding: 10px 14px;
       border-radius: var(--radius-md);
       cursor: pointer;
-      color: var(--color-text-muted);
+      color: var(--text-muted);
       font-weight: 600;
       margin-bottom: 4px;
-      transition: var(--transition-fast);
+      transition: var(--transition);
     }
 
     .room:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--color-text-main);
+      background: var(--bg-main);
+      color: var(--text-main);
     }
 
     .room.active {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--color-text-main);
+      background: var(--bg-bubble-self);
+      color: var(--text-main);
     }
 
-    /* --- メインコンテンツエリア --- */
+    /* --- メインエリア --- */
     #main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: var(--color-bg-panel);
-      position: relative;
+      background: var(--bg-main);
+      min-width: 0; /* フレックスアイテムの縮小バグ防止 */
     }
 
     #header {
       height: var(--header-height);
-      background: var(--color-bg-panel);
+      background: #ffffff;
       display: flex;
       align-items: center;
-      padding: 0 24px;
+      padding: 0 16px;
       font-size: 16px;
       font-weight: 700;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
       gap: 12px;
     }
 
-    /* モバイル用メニューボタン */
     #menu-trigger {
       display: none;
-      background: none;
+      background: var(--bg-main);
       border: none;
-      padding: 8px;
-      font-size: 22px;
-      color: var(--color-text-main);
+      padding: 6px 12px;
+      font-size: 18px;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      height: auto;
-      width: auto;
     }
 
-    /* --- メッセージタイムライン --- */
+    /* --- メッセージエリア --- */
     #messages {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-    }
-
-    /* スクリブルバーのスタイリッシュ化 */
-    #messages::-webkit-scrollbar {
-      width: 6px;
-    }
-    #messages::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 3px;
+      gap: 14px;
     }
 
     .message {
-      max-width: 70%;
-      background: var(--color-bg-sidebar);
+      max-width: 75%;
+      background: var(--bg-bubble-other);
       padding: 12px 16px;
-      border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
-      box-shadow: var(--shadow-sm);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
       animation: anim-fade-up 0.2s ease-out;
       line-height: 1.5;
-      font-size: 15px;
+      font-size: 14px;
       align-self: flex-start;
       word-break: break-all;
     }
 
     .message.self {
       align-self: flex-end;
-      background: var(--color-accent);
-      border-radius: var(--radius-lg) 0 var(--radius-lg) var(--radius-lg);
+      background: var(--bg-bubble-self);
     }
 
+    /* クリック可能なかわいいネームタグ */
     .name {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--color-text-muted);
-      margin-bottom: 4px;
-      cursor: help;
-      position: relative;
-      display: inline-block;
-    }
-
-    .message.self .name {
-      color: rgba(255, 255, 255, 0.75);
-    }
-
-    /* プロフィールポップオーバー */
-    .name:hover::after {
-      content: attr(data-profile);
-      position: absolute;
-      left: 0;
-      top: -34px;
-      background: #000000;
-      color: #ffffff;
-      padding: 6px 12px;
       font-size: 11px;
+      font-weight: 700;
+      color: var(--color-accent-hover);
+      margin-bottom: 4px;
+      display: inline-block;
+      cursor: pointer;
+      background: rgba(79, 209, 197, 0.1);
+      padding: 2px 8px;
       border-radius: var(--radius-sm);
-      white-space: nowrap;
-      z-index: 10;
-      font-weight: normal;
-      box-shadow: var(--shadow-lg);
+      transition: var(--transition);
     }
-
-    .name[data-profile=""]:hover::after {
-      display: none;
+    .name:hover {
+      background: rgba(79, 209, 197, 0.2);
     }
 
     .time {
       font-size: 10px;
-      color: var(--color-text-muted);
+      color: var(--text-muted);
       margin-top: 4px;
       text-align: right;
     }
 
-    .message.self .time {
-      color: rgba(255, 255, 255, 0.65);
-    }
-
-    /* インラインコード装飾 */
     .inline-code {
-      background: rgba(0, 0, 0, 0.3);
+      background: #edf2f7;
       padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      font-family: Consolas, Monaco, monospace;
+      border-radius: 4px;
+      font-family: monospace;
       font-size: 0.9em;
-      color: #ff79c6;
+      color: #e53e3e;
     }
 
-    .message.self .inline-code {
-      background: rgba(0, 0, 0, 0.2);
-      color: #ffffff;
-    }
-
-    /* --- ボトム入力エリア --- */
+    /* --- 徹底対策：はみ出さないボトム入力エリア --- */
     #bottom {
-      background: var(--color-bg-panel);
-      padding: 0 24px 24px 24px;
+      background: #ffffff;
+      padding: 12px 16px;
       display: flex;
-      gap: 12px;
-      align-items: flex-end;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
+      width: 100%;
     }
 
     #text {
       flex: 1;
+      min-width: 0; /* スマホ縮小時の潰れ防止 */
       resize: none;
-      height: 48px;
-      max-height: 150px;
+      height: 40px;
       border: none;
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      background: var(--color-bg-input);
-      color: var(--color-text-main);
-      font-size: 15px;
+      border-radius: var(--radius-xl);
+      padding: 10px 16px;
+      background: var(--bg-input);
+      color: var(--text-main);
+      font-size: 14px;
       line-height: 1.4;
-      transition: var(--transition-fast);
+      transition: var(--transition);
     }
 
     #text:focus {
       outline: none;
+      background: #ffffff;
       box-shadow: 0 0 0 2px var(--color-accent);
     }
 
     button {
-      height: 48px;
-      padding: 0 22px;
+      height: 40px;
+      padding: 0 16px;
       border: none;
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-xl);
       background: var(--color-accent);
       color: white;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
-      transition: var(--transition-fast);
+      transition: var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
       white-space: nowrap;
+      flex-shrink: 0; /* ボタンが画面外に押し潰されるのを防ぐ */
     }
 
     button:hover {
       background: var(--color-accent-hover);
     }
 
-    /* --- モーダル＆通知共通仕様 --- */
-    #toast {
-      position: fixed;
-      bottom: 32px;
-      right: 32px;
-      background: var(--color-success);
-      color: white;
-      padding: 12px 24px;
-      border-radius: var(--radius-md);
-      font-weight: 600;
-      box-shadow: var(--shadow-lg);
-      display: none;
-      z-index: 100;
-      animation: anim-fade-up 0.2s ease-out;
+    .btn-logout {
+      background: var(--color-logout);
+      color: var(--color-logout-text);
+    }
+    .btn-logout:hover {
+      background: #cbd5e0;
     }
 
+    /* --- モーダルポップアップ --- */
     .modal {
       position: fixed;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 200;
+      padding: 16px;
     }
 
     .modal-content {
       width: 100%;
-      max-width: 360px;
-      margin: 16px;
-      background: var(--color-bg-sidebar);
-      padding: 28px;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      max-width: 340px;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-popup);
+      animation: anim-fade-up 0.25s ease-out;
     }
 
     .modal-content h2 {
-      font-size: 20px;
-      margin-bottom: 20px;
+      font-size: 18px;
+      margin-bottom: 16px;
       text-align: center;
+      color: var(--text-main);
+    }
+
+    /* プロフィール確認モーダル用の特別スタイル */
+    .prof-view-title {
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      color: var(--text-main);
+    }
+    .prof-view-id {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .prof-view-body {
+      background: var(--bg-main);
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      min-height: 60px;
+      word-break: break-all;
     }
 
     .setting {
-      margin-top: 14px;
-      font-size: 13px;
-      color: var(--color-text-muted);
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     .setting input {
       width: 100%;
-      padding: 12px;
-      margin-top: 6px;
-      margin-bottom: 12px;
-      background: var(--color-bg-main);
-      border: 1px solid rgba(0, 0, 0, 0.2);
+      padding: 10px 12px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      background: var(--bg-main);
+      border: 1px solid #edf2f7;
       border-radius: var(--radius-md);
-      color: white;
+      color: var(--text-main);
       font-size: 14px;
     }
 
     .setting input:focus {
       outline: none;
       border-color: var(--color-accent);
+      background: #ffffff;
     }
 
     .modal button {
       width: 100%;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
-    /* モバイル表示用のオーバーレイ背景 */
+    #toast {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(45, 55, 72, 0.9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: var(--radius-xl);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-popup);
+      display: none;
+      z-index: 300;
+    }
+
     #sidebar-overlay {
       display: none;
       position: fixed;
@@ -391,45 +389,30 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.3);
       z-index: 5;
     }
 
     @keyframes anim-fade-up {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- スマートフォン対応 (レスポンシブブレイクポイント) --- */
-    @media (max-width: 768px) {
-      #menu-trigger {
-        display: block; /* ハンバーガーメニューを表示 */
-      }
-
+    /* --- スマートフォン対応の最適化 --- */
+    @media (max-width: 600px) {
+      #menu-trigger { display: block; }
       #sidebar {
         position: fixed;
-        left: calc(-1 * var(--sidebar-width)); /* 最初は画面外へ隠す */
+        left: calc(-1 * var(--sidebar-width));
         top: 0;
         bottom: 0;
         height: 100vh;
       }
-
-      /* サイドバーがアクティブなときの挙動 */
-      #sidebar.mobile-open {
-        left: 0;
-      }
-
-      .message {
-        max-width: 85%;
-      }
-
-      #bottom {
-        padding: 0 16px 16px 16px;
-      }
-      
-      button {
-        padding: 0 16px; /* ボタン幅をスマホ用にスリム化 */
-      }
+      #sidebar.mobile-open { left: 0; }
+      .message { max-width: 85%; }
+      #bottom { padding: 10px; gap: 6px; }
+      #text { padding: 10px 14px; }
+      button { padding: 0 12px; font-size: 12px; }
     }
   </style>
 </head>
@@ -438,11 +421,11 @@
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
 <div id="sidebar">
-  <div id="logo">☁ Sky Chat v1.2.0</div>
+  <div id="logo">☁ Sky Chat</div>
   <div id="userinfo">
     <div class="user-meta">
       <span id="display-nickname">---</span>
-      <span onclick="openProfileModal()" style="cursor:pointer; font-size:16px; color:var(--color-text-muted);" title="プロフィール設定">⚙</span>
+      <span onclick="openProfileModal()" style="cursor:pointer; font-size:14px; color:var(--text-muted);" title="プロフィール設定">⚙ 設定</span>
     </div>
     <div class="user-id">ID: <span id="display-username">---</span></div>
     <div class="user-prof-text" id="display-profile"></div>
@@ -452,14 +435,14 @@
 
 <div id="main">
   <div id="header">
-    <button id="menu-trigger" onclick="toggleSidebar(true)">☰</button>
-    <span id="header-title">Sky Chat v1.2.0</span>
+    <button id="menu-trigger" onclick="toggleSidebar(true)">☰ メニュー</button>
+    <span id="header-title"># 雑談</span>
   </div>
   <div id="messages"></div>
   <div id="bottom">
-    <textarea id="text" placeholder="メッセージを入力&#10;Shift+Enterで改行 / Enterで送信"></textarea>
+    <textarea id="text" placeholder="メッセージを入力..."></textarea>
     <button onclick="send()">送信</button>
-    <button onclick="logout()" style="background: var(--color-dark-btn);">ログアウト</button>
+    <button onclick="logout()" class="btn-logout">ログアウト</button>
   </div>
 </div>
 
@@ -488,12 +471,20 @@
       <input id="editProfile" placeholder="趣味やステータスを入力">
     </div>
     <button onclick="saveProfile()">保存する</button>
-    <button onclick="closeProfileModal()" style="background: var(--color-dark-btn); margin-top: 10px;">閉じる</button>
+    <button onclick="closeProfileModal()" class="btn-logout" style="margin-top: 8px;">閉じる</button>
+  </div>
+</div>
+
+<div class="modal" id="viewProfileModal" style="display:none;" onclick="closeViewProfileModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="prof-view-title" id="viewNick">---</div>
+    <div class="prof-view-id">ID: <span id="viewUser">---</span></div>
+    <div class="prof-view-body" id="viewProf">ここにプロフィールが入ります。</div>
+    <button onclick="document.getElementById('viewProfileModal').style.display='none'">閉じる</button>
   </div>
 </div>
 
 <script>
-// ※以前作成されたお使いのGAS WebアプリURLをここに反映させてください
 const GAS = "https://script.google.com/macros/s/AKfycbyKWav6fidXMcRB4xyCBeT5_DDf0ZpYiZ21Ir4wEiqyl80xItyOexTOF_P8aQJQulloaQ/exec";
 
 const App = {
@@ -503,6 +494,9 @@ const App = {
   messages: [],
   rooms: ["雑談"] 
 }
+
+// ユーザー名からプロフィール情報を即座に引くためのキャッシュマップ
+let globalUserMap = {};
 
 function init() {
   App.authUser = localStorage.getItem("chat_user") || "";
@@ -518,7 +512,6 @@ function init() {
   }
 }
 
-// 📱 モバイル用サイドバー開閉切り替え
 function toggleSidebar(open) {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
@@ -531,6 +524,26 @@ function toggleSidebar(open) {
   }
 }
 
+// ★ 新設：名前をクリックしたときにプロフィールポップアップを呼び出す関数
+function showUserProfile(username) {
+  const user = globalUserMap[username];
+  
+  document.getElementById("viewUser").innerText = username;
+  if (user) {
+    document.getElementById("viewNick").innerText = user.nickname || username;
+    document.getElementById("viewProf").innerText = user.profile || "ひとことプロフィールは未設定です。";
+  } else {
+    // キャッシュがない場合（マイクラ連携ユーザーや新規ユーザーなど）
+    document.getElementById("viewNick").innerText = username;
+    document.getElementById("viewProf").innerText = "Minecraftまたは外部システムから参加中のユーザーです。";
+  }
+  document.getElementById("viewProfileModal").style.display = "flex";
+}
+
+function closeViewProfileModal(e) {
+  document.getElementById("viewProfileModal").style.display = "none";
+}
+
 async function login() {
   const u = document.getElementById("loginUser").value.trim();
   const p = document.getElementById("loginPass").value.trim();
@@ -538,8 +551,7 @@ async function login() {
   
   try {
     let r = await fetch(`${GAS}?room=雑談&authUser=${encodeURIComponent(u)}&authPass=${encodeURIComponent(p)}`, {
-      method: "GET",
-      redirect: "follow"
+      method: "GET", redirect: "follow"
     });
     let data = await r.json();
     
@@ -550,7 +562,6 @@ async function login() {
       localStorage.setItem("chat_pass", p);
       App.authUser = u;
       App.authPass = p;
-      
       document.getElementById("loginModal").style.display = "none";
       document.getElementById("display-username").innerText = u;
       
@@ -561,14 +572,12 @@ async function login() {
         document.getElementById("display-nickname").innerText = data.myProfile.nickname || u;
         document.getElementById("display-profile").innerText = data.myProfile.profile || "";
       }
-      
       renderRooms();
       render();
       setInterval(load, 2000);
     }
   } catch(e) {
-    alert("認証通信に失敗しました。URLや接続を確認してください");
-    console.log(e);
+    alert("通信に失敗しました");
   }
 }
 
@@ -595,27 +604,19 @@ async function saveProfile(){
   toast("更新中...");
   try {
     await fetch(GAS, {
-      method: "POST",
-      mode: "no-cors",
+      method: "POST", mode: "no-cors",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({
-        action: "updateProfile",
-        authUser: App.authUser,
-        authPass: App.authPass,
-        nickname: nick,
-        profile: prof
+        action: "updateProfile", authUser: App.authUser, authPass: App.authPass, nickname: nick, profile: prof
       })
     });
-    
     document.getElementById("display-nickname").innerText = nick;
     document.getElementById("display-profile").innerText = prof;
     closeProfileModal();
     toast("更新しました");
-    
     load();
   } catch(e) {
     toast("更新に失敗しました");
-    console.log(e);
   }
 }
 
@@ -629,21 +630,15 @@ function toast(text){
 function renderRooms(){
   const container = document.getElementById("room-list");
   container.innerHTML = "";
-  
   App.rooms.forEach(rName => {
     let div = document.createElement("div");
     div.className = "room";
-    if(rName === App.room) {
-      div.classList.add("active");
-    }
+    if(rName === App.room) div.classList.add("active");
     div.innerText = `# ${rName}`;
-    
     div.onclick = () => {
-      document.querySelectorAll(".room").forEach(v => v.classList.remove("active"));
-      div.classList.add("active");
       App.room = rName;
       document.getElementById("header-title").innerText = `# ${rName}`;
-      toggleSidebar(false); // スマホで部屋を選んだら自動でドロワーを閉じる
+      toggleSidebar(false);
       load();
     };
     container.appendChild(div);
@@ -652,26 +647,22 @@ function renderRooms(){
 
 function render(){
   const messagesBox = document.getElementById("messages");
-  const currentDOMCount = messagesBox.querySelectorAll(".message").length;
-  if (currentDOMCount === App.messages.length) {
-    return; 
-  }
-
   messagesBox.innerHTML = "";
+  
   App.messages.forEach(v => {
     let div = document.createElement("div");
     div.className = "message" + (v.user === App.authUser ? " self" : "");
     
     const displayName = v.nickname || v.user;
     
+    // ★ 修正：onclick="showUserProfile('${v.user}')" を組み込み、誰の名前でも押せるように変更
     div.innerHTML = `
-      <div class="name" data-profile="${v.profile ? '💡 ' + v.profile : ''}">${displayName}</div>
+      <div class="name" onclick="showUserProfile('${v.user}')">👤 ${displayName}</div>
       <div>${parseRichText(v.message)}</div>
       <div class="time">${format(v.time)}</div>
     `;
     messagesBox.appendChild(div);
   });
-  
   messagesBox.scrollTop = messagesBox.scrollHeight;
 }
 
@@ -679,36 +670,27 @@ async function load(){
   if(!GAS || !App.authUser) return;
   try{
     let r = await fetch(`${GAS}?room=${encodeURIComponent(App.room)}&authUser=${encodeURIComponent(App.authUser)}&authPass=${encodeURIComponent(App.authPass)}`, {
-      method: "GET",
-      redirect: "follow"
+      method: "GET", redirect: "follow"
     });
     let data = await r.json();
+    if(data.error) return logout();
     
-    if(data.error) {
-      return logout();
+    // 他人のプロフィールをポップアップで出せるように、最新データをローカルマップにキャッシュ
+    if(data.users) {
+      globalUserMap = data.users;
     }
     
     let serverMessages = data.messages || [];
-    if (App.messages.length > 0 && serverMessages.length > 0) {
-      let lastLocal = App.messages[App.messages.length - 1];
-      let isReflected = serverMessages.some(m => m.message === lastLocal.message && m.user === lastLocal.user);
-      if (!isReflected && lastLocal.user === App.authUser) {
-        serverMessages.push(lastLocal);
-      }
-    }
-    
     App.messages = serverMessages;
     
     if (data.rooms && JSON.stringify(App.rooms) !== JSON.stringify(data.rooms)) {
       App.rooms = data.rooms;
       renderRooms();
     }
-    
     if(data.myProfile){
       document.getElementById("display-nickname").innerText = data.myProfile.nickname || App.authUser;
       document.getElementById("display-profile").innerText = data.myProfile.profile || "";
     }
-    
     render();
   }catch(e){
     console.log("読み込みエラー:", e);
@@ -718,35 +700,24 @@ async function load(){
 function format(t){
   let d = new Date(t);
   if (isNaN(d.getTime())) return t;
-
   let now = new Date();
   const pad = n => String(n).padStart(2, '0');
   let timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  let diffDays = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / (1000 * 60 * 60 * 24));
 
-  let dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  let nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let diffTime = nowDate.getTime() - dDate.getTime();
-  let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return `今日 ${timeStr}`;
-  } else if (diffDays === 1) {
-    return `昨日 ${timeStr}`;
-  } else if (d.getFullYear() === now.getFullYear()) {
-    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
-  } else {
-    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
-  }
+  if (diffDays === 0) return `今日 ${timeStr}`;
+  if (diffDays === 1) return `昨日 ${timeStr}`;
+  if (d.getFullYear() === now.getFullYear()) return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${timeStr}`;
 }
 
 function parseRichText(str){
   let escaped = str.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  escaped = escaped
+  return escaped
     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')       
     .replace(/__(.*?)__/g, '<u>$1</u>')           
     .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>') 
     .replaceAll("\n", "<br>");                    
-  return escaped;
 }
 
 async function send(){
@@ -755,41 +726,21 @@ async function send(){
   if(msg == "" || !App.authUser) return;
   
   let currentNick = document.getElementById("display-nickname").innerText;
-  let localData = {
-    user: App.authUser,
-    nickname: currentNick === "---" ? App.authUser : currentNick,
-    profile: "",
-    room: App.room,
-    message: msg,
-    time: new Date()
-  };
-  
-  App.messages.push(localData);
+  App.messages.push({
+    user: App.authUser, nickname: currentNick, profile: "", room: App.room, message: msg, time: new Date()
+  });
   render();
-  
   textarea.value = "";
-  toast("送信中...");
   
-  if(GAS){
-    try {
-      await fetch(GAS, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          authUser: App.authUser,
-          authPass: App.authPass,
-          room: App.room,
-          message: msg
-        })
-      });
-      
-      toast("送信しました");
-      setTimeout(load, 500);
-    } catch(e) {
-      console.log("送信エラー:", e);
-      toast("送信に失敗しました");
-    }
+  try {
+    await fetch(GAS, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ authUser: App.authUser, authPass: App.authPass, room: App.room, message: msg })
+    });
+    setTimeout(load, 200);
+  } catch(e) {
+    toast("送信に失敗しました");
   }
 }
 
